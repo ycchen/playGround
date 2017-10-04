@@ -1,0 +1,4 @@
+class Notification < ApplicationRecord
+	# after_create_commit { NotificationBroadcastJob.perform_later(Notification.count)}
+	after_create_commit { NotificationBroadcastJob.perform_later(Notification.count,self)}
+end

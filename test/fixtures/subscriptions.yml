@@ -1,0 +1,13 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  type: 
+  length: 1
+  magazine: one
+  reader: one
+
+two:
+  type: 
+  length: 1
+  magazine: two
+  reader: two
