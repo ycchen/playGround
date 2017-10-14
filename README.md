@@ -149,3 +149,13 @@ Client.select(:id, :name).map { |c| [c.id, c.name] }
 
 > rails g job NotificationBroadcast
 
+#### open 2 different broswers
+
+#### first broswer go to http://localhost:3000/messages
+
+
+#### second broswer go to http://localhost:3000  # to view live notification
+
+#### http://myprogrammingblog.com/2016/08/22/deploy-actioncable-to-heroku-part4/
+
+#### https://github.com/myprogrammingblog/notificator-rails5-example
