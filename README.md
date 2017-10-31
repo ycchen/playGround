@@ -307,3 +307,103 @@ $ QUEUE=* rake resque:work
 
 > grep --color "\[\SnippetHighlighterJob\]" -A 3  log/development.log
 
+
+### Action Mailer
+
+> rails g mailer UserMailer
+
+* create welcome_email.html.erb and welcome_email.text.erb
+
+* calling the Mailer
+
+> rails g scaffold user name email login
+
+
+
+#### Caching:  page, action and fragment caching. 
+
+* By default Rails provides fragment caching. in order to use page and action caching you will need to add 
+'actionpack-page_caching' and 'acitonpack-action_caching' to your Gemfile
+
+* By default, caching is only enabled in your production environment. To play around with caching locally you'll want to enable caching in your local environment by setting 'config.action_controller.perform_caching' to true in the relevant config/environments/*.rb file
+
+* Page caching has been removed from Rails 4.
+
+* Action caching has been removed from Rails 4.
+
+* Action Caching: Page Caching cannot be used for actions that have before filters. for example, pages that require authentication.  This 
+is where Action Caching comes in.  Action Caching works like Page Caching except the incoming web request hits the Rails stack so that before filters can be run on it before the cache is served.  This allows authentication and other restrictions to be run while still serving the result of the output from a cached copy.
+
+* Fragment Caching: For example, if you wanted to cache each production on a page. you could use this code:
+
+```ruby
+	<% @products.each do |product| %>
+		<% cache product do %>
+			<%= render product %>
+		<% end %>
+	<% end %>
+```
+
+when your application receiveds its first request to this page, Rails will write a new cache entry with a unique key. A key looks something like this views/products/1-201505056193031061005000/bea67108094918eeba42cd4a6e786901
+
+* The number in the middle is the product_id followed by the temestamp value in teh updated_at attribute of the product record. Rails uses the timestamp value to make sure it is not serving stale data.  If the value of updated_at has changed, a new key will be generated. Then Rails will write a new cache to that key, and the old cache written to the old key will never be used again. This is called key-based expiration.
+
+
+* Cache fragments will also be expired when the view fragment changes (the HTML in the view changes). 
+
+* Cache stroes like Memcached will automatically delete old cache files.
+
+* Cache a fragment under certain conditions. you can use cache_if or cache_unless
+
+```ruby
+<% cache_if admin?, product do %>
+	<%= render product %>
+<% end%>
+```
+
+*Collection caching
+
+```ruby
+	<%= render partial: 'products/product', collection: @products, cached: true %>
+```
+
+
+#### Russian Doll Caching
+* You may want to nest cached fragments inside other cached fragments. This is called Russian doll caching.
+
+* The advantage of Russian doll caching is that if a single product is updated, all the other inner fragments can be resued when regenerating the outer fragment.
+
+
+```ruby
+	<% cache product do %>
+	<%= render product.games %>
+	<% end %>
+
+
+	<% cache game do %>
+		<%= render game %>
+	<% end%>
+```
+* if any attribute of game is changed, the updated_at value will be set to the current time, thereby expiring the cache.  However, because updated_at will not be changed for the product object, that cache will not be expired and your app will serve stale data. To fix this, we tie the models together with the touch method:
+
+```ruby
+class Product < ApplicationRecord
+	has_many :games
+end
+
+class Game < ApplicationRecord
+	belongs_to :production, touch: true
+end
+```
+with touch set to true, any action which changes updated_at for a game record will also change it for the associated product, thereby expiring the cache.
+
+
+```ruby
+class Product < ApplicationRecord
+	def competing_price
+		Rails.cache.fetch("#{cache_key}/competing_price", expires_in: 12.hours) do
+			Competitor::API.find_price(id)
+		end
+	end
+end
+```

@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resources :users
   root to: 'notifications#index'
   resources :messages
   get 'notifications/index'
